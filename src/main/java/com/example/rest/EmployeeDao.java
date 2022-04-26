@@ -2,8 +2,10 @@ package com.example.rest;
 
 import org.springframework.stereotype.Component;
 
-import java.math.BigInteger;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
 
 @Component
 public class EmployeeDao implements Dao<Employee> {
@@ -11,37 +13,21 @@ public class EmployeeDao implements Dao<Employee> {
     private List<Employee> employees = new ArrayList<>();
 
     public EmployeeDao() {
-        Employee employee1 = Employee.builder().id(1L).name("Olga").salary(new BigInteger("5000")).build();
-        Employee employee2 = Employee.builder().id(1L).name("Tom").salary(new BigInteger("200")).build();
-        Employee employee3 = Employee.builder().id(1L).name("Stas").salary(new BigInteger("1300")).build();
-        Employee employee4 = Employee.builder().id(1L).name("Pam").salary(new BigInteger("8000")).build();
+        Employee employee1 = Employee.builder().id(0L).name("Olga").salary(500d).build();
+        Employee employee2 = Employee.builder().id(1L).name("Tom").salary(2000d).build();
+        Employee employee3 = Employee.builder().id(2L).name("Stas").salary(1300d).build();
+        Employee employee4 = Employee.builder().id(3L).name("Pam").salary(800d).build();
 
         employees.addAll(Arrays.asList(employee1, employee2, employee3, employee4));
     }
 
     @Override
-    public Optional<Employee> get(long id) {
-        return Optional.ofNullable(employees.get((int) id));
+    public Optional<Employee> get(Long id) {
+        return Optional.ofNullable(employees.get(id.intValue()));
     }
 
     @Override
     public List<Employee> getAll() {
         return employees;
-    }
-
-    @Override
-    public void save(Employee employee) {
-        employees.add(employee);
-    }
-
-    @Override
-    public void update(Employee employee) {
-        int index = employees.indexOf(employee);
-        employees.set(index, employee);
-    }
-
-    @Override
-    public void delete(Employee employee) {
-        employees.remove(employee);
     }
 }

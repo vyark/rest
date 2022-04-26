@@ -1,38 +1,66 @@
 package com.example.rest;
 
+import com.google.common.reflect.TypeToken;
+import com.google.gson.Gson;
+import lombok.SneakyThrows;
+
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 public class CompletableFutureService {
 
+    @SneakyThrows
     public void start() {
         // Fetch a list of Employee objects asynchronously by calling the hiredEmployees().
-        HttpRequest aRequest = HttpRequest.newBuilder().uri(URI.create("http://localhost:8080/employees"))
-                .timeout(Duration.ofMinutes(1)).header("Content-Type", "application/json").build();
-        CompletableFuture<HttpResponse<String>> aCompletionStage = HttpClient.newBuilder()
-                .build()
-                .sendAsync(aRequest, HttpResponse.BodyHandlers.ofString());
+        //{ [ { "id": "1", "name":"Bob"},{ "id": "2", "name":"Alice"} ] }
+        HttpRequest aRequest = HttpRequest.newBuilder().uri(URI.create("http://localhost:8080/employees")).timeout(Duration.ofMinutes(1)).header("Content-Type", "application/json").build();
+        CompletableFuture<HttpResponse<String>> aCompletionStage =
+                HttpClient.newBuilder().build().sendAsync(aRequest, HttpResponse.BodyHandlers.ofString());
 
-        // Join another CompletionStage<List> that takes care of filling the salary of each hired employee,
-        // by calling the getSalary(hiredEmployeeId) method which returns a CompletionStage that
-        // asynchronously fetches the salary (again could be consuming a REST endpoint).
-        HttpRequest bRequest = HttpRequest.newBuilder().uri(URI.create("http://localhost:8080/salary"))
-                .timeout(Duration.ofMinutes(1)).header("Content-Type", "application/json").build();
-        CompletableFuture<HttpResponse<String>> bCompletionStage = HttpClient.newBuilder()
-                .build()
-                .sendAsync(bRequest, HttpResponse.BodyHandlers.ofString());
-        CompletableFuture<Void> combinedDataCompletionStage = CompletableFuture.allOf(
-                aCompletionStage, bCompletionStage);
+        System.out.println(aCompletionStage.get().body());
 
-        // When all Employee objects are filled with their salaries, we end up with a List<CompletionStage>,
-        // so we call <special operation on CF> to get a final stage that completes upon completion of all these stages.
-        combinedDataCompletionStage.join();
+//         Join another CompletionStage<List> that takes care of filling the salary of each hired employee,
+//         by calling the getSalary(hiredEmployeeId) method which returns a CompletionStage that
+//         asynchronously fetches the salary (again could be consuming a REST endpoint).
+//        { "id": "1", "salary":"10_000"}
+        CompletableFuture<HttpResponse<String>> bCompletionStage =
+                aCompletionStage.thenCompose(s -> {
+                    List<Employee> employeeList = new Gson().fromJson(s.body(), new TypeToken<ArrayList<Employee>>() {
+                    }.getType());
+                    List<Long> employeeIds = employeeList.stream().map(Employee::getId).collect(Collectors.toList());
 
-        // Print hired Employees with their salaries via <special operation on CF> on the final stage.
-        combinedDataCompletionStage.toCompletableFuture().thenAccept(s -> System.out.println("Computation returned: " + s));
+                    List<CompletableFuture<HttpResponse<String>>> list = employeeIds.stream().map(id -> {
+                        HttpRequest bRequest = HttpRequest.newBuilder().uri(URI.create("http://localhost:8080/salary/" + id))
+                                .header("Content-Type", "application/json").build();
+                        return HttpClient.newBuilder().build().sendAsync(bRequest, HttpResponse.BodyHandlers.ofString());
+                    }).collect(Collectors.toList());
+
+                    return list.get(0);
+                });
+
+        System.out.println(bCompletionStage.get().body());
+//
+////         { "id": "1", "salary":"10_000", name "Bob" }
+////         When all Employee objects are filled with their salaries, we end up with a List<CompletionStage>,
+////         so we call <special operation on CF> to get a final stage that completes upon completion of all these stages.
+        HttpRequest cRequest =
+                HttpRequest.newBuilder().uri(URI.create("http://localhost:8080/employees")).timeout(Duration.ofMinutes(1)).header("Content-Type", "application/json").build();
+        CompletableFuture<HttpResponse<String>> cCompletionStage =
+                HttpClient.newBuilder().build().sendAsync(cRequest, HttpResponse.BodyHandlers.ofString());
+
+        CompletableFuture<HttpResponse<String>> combinedDataCompletionStage =
+                CompletableFuture.supplyAsync(() -> aCompletionStage)
+                        .thenCompose(s -> CompletableFuture.supplyAsync(() -> bCompletionStage))
+                        .thenCompose(s -> CompletableFuture.supplyAsync(() -> cCompletionStage)).join();
+//
+////         Print hired Employees with their salaries via <special operation on CF> on the final stage.
+        combinedDataCompletionStage.toCompletableFuture().thenAccept(s -> System.out.println("Computation returned: " + s.body()));
     }
 }
