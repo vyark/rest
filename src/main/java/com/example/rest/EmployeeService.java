@@ -1,10 +1,10 @@
 package com.example.rest;
 
-import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.List;
-import java.util.concurrent.CompletionStage;
 
 public interface EmployeeService {
-    List<Employee> hiredEmployees() throws IOException;
-    CompletionStage getSalary();
+    List<Employee> hiredEmployees() throws Exception;
+
+    BigDecimal getSalary(Long hiredEmployeeId);
 }

@@ -3,15 +3,19 @@ package com.example.rest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.math.BigInteger;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
-import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ThreadLocalRandom;
 
 @Component
 public class EmployeeServiceImpl implements EmployeeService {
 
-    @Autowired
-    private EmployeeDao employeeDao;
+    private final EmployeeDao employeeDao;
+
+    public EmployeeServiceImpl(EmployeeDao employeeDao) {
+        this.employeeDao = employeeDao;
+    }
 
     @Override
     public List<Employee> hiredEmployees() {
@@ -19,10 +23,11 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     @Override
-    public CompletionStage<List<Employee>> getSalary() {
-        for (Employee employee : employeeDao.getAll()) {
-            employee.setSalary(employee.getSalary().multiply(new BigInteger("2")));
-        }
-        return null;
+    public BigDecimal getSalary(Long hiredEmployeeId) {
+        Employee employee = employeeDao.get(hiredEmployeeId).orElseThrow();
+        BigDecimal truncatedDouble = BigDecimal.valueOf(ThreadLocalRandom.current().nextDouble(500, 2000))
+                .setScale(2, RoundingMode.HALF_UP);
+        employee.setSalary(truncatedDouble);
+        return employee.getSalary();
     }
 }
