@@ -23,7 +23,7 @@ public class EmployeeControllerTest {
 
     @SneakyThrows
     @Test
-    public void all() {
+    public void shouldReturnAllEmployees() {
         mvc.perform(get("/employees")
                         .contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
                 .andExpect(content().string(containsString("Olga")));
@@ -31,7 +31,7 @@ public class EmployeeControllerTest {
 
     @SneakyThrows
     @Test
-    public void salary() {
+    public void shouldReturnSalaryForEmployeeById() {
         mvc.perform(get("/salary/{id}", "1")
                         .contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
                 .andDo(print());

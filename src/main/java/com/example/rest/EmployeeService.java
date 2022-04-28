@@ -1,9 +1,10 @@
 package com.example.rest;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 public interface EmployeeService {
     List<Employee> hiredEmployees() throws Exception;
 
-    Double getSalary(Long hiredEmployeeId);
+    BigDecimal getSalary(Long hiredEmployeeId);
 }

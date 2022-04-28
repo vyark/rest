@@ -23,11 +23,10 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     @Override
-    public Double getSalary(Long hiredEmployeeId) {
+    public BigDecimal getSalary(Long hiredEmployeeId) {
         Employee employee = employeeDao.get(hiredEmployeeId).orElseThrow();
-        Double truncatedDouble = BigDecimal.valueOf(ThreadLocalRandom.current().nextDouble(500, 2000))
-                .setScale(2, RoundingMode.HALF_UP)
-                .doubleValue();
+        BigDecimal truncatedDouble = BigDecimal.valueOf(ThreadLocalRandom.current().nextDouble(500, 2000))
+                .setScale(2, RoundingMode.HALF_UP);
         employee.setSalary(truncatedDouble);
         return employee.getSalary();
     }

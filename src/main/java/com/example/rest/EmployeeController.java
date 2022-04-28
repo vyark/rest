@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.List;
 
 @RestController
@@ -20,7 +21,7 @@ public class EmployeeController {
     }
 
     @GetMapping("/salary/{id}")
-    public Double salary(@PathVariable String id) {
+    public BigDecimal salary(@PathVariable String id) {
         return service.getSalary(Long.valueOf(id));
     }
 }
